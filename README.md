@@ -1,6 +1,7 @@
-# elgato-stream-deck [![npm version](https://img.shields.io/npm/v/elgato-stream-deck.svg)](https://npm.im/elgato-stream-deck) [![license](https://img.shields.io/npm/l/elgato-stream-deck.svg)](https://npm.im/elgato-stream-deck) [![Travis](https://travis-ci.org/Lange/node-elgato-stream-deck.svg?branch=master)](https://travis-ci.org/Lange/node-elgato-stream-deck) [![Coverage Status](https://coveralls.io/repos/github/Lange/node-elgato-stream-deck/badge.svg?branch=master)](https://coveralls.io/github/Lange/node-elgato-stream-deck?branch=master) [![Join the chat at https://gitter.im/node-elgato-stream-deck/Lobby](https://badges.gitter.im/node-elgato-stream-deck/Lobby.svg)](https://gitter.im/node-elgato-stream-deck/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# elgato-stream-deck (bebo)
 
-![alt text](media/streamdeck_ui.png "elgato-stream-deck")
+much stripped down version of: [`elgato-stream-deck`](https://github.com/lange/elgato-stream-deck)
+for [`bebo.com`](https://bebo.com) app
 
 [`elgato-stream-deck`](https://github.com/lange/elgato-stream-deck) is a Node.js library for interfacing
 with the [Elgato Stream Deck](https://www.elgato.com/en/gaming/stream-deck).
@@ -10,35 +11,30 @@ with the [Elgato Stream Deck](https://www.elgato.com/en/gaming/stream-deck).
 `$ npm install --save elgato-stream-deck`
 
 If that fails (**or if you are on a Raspberry Pi**), you will need to install a compiler toolchain to enable npm to build
-some of `node-elgato-stream-deck`'s dependencies from source. 
+some of `node-elgato-stream-deck`'s dependencies from source.
 
 * Windows
-  * Install [`windows-build-tools`](https://github.com/felixrieseberg/windows-build-tools):
-  ```bash
-  npm install --global windows-build-tools
-  ```
+    * Install [`windows-build-tools`](https://github.com/felixrieseberg/windows-build-tools):
+
+
+    ```bash
+    npm install --global windows-build-tools
+    ```
 * MacOS
-  * Install the Xcode Command Line Tools:
-  ```bash
-  xcode-select --install
-  ```
+    * Install the Xcode Command Line Tools:
+
+
+    ```bash
+    xcode-select --install
+    ```
 * Linux (**including Raspberry Pi**)
-  * Follow the instructions for Linux in the ["Compiling from source"](https://github.com/node-hid/node-hid#compiling-from-source) steps for `node-hid`:
-	```bash
-	sudo apt-get install build-essential git
-	sudo apt-get install gcc-4.8 g++-4.8 && export CXX=g++-4.8
-	sudo apt-get install sudo apt install libusb-1.0-0 libusb-1.0-0-dev
-	```
-  * Install a recent version of Node.js.:
-	```bash
-	curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-	sudo apt-get install -y nodejs 
-	```
-  * Try installing `node-elgato-stream-deck`
-  * If you still have issues, ensure everything is updated and try again:
-	```bash
-	sudo apt-get update && sudo apt-get upgrade
-	```
+    * Follow the instructions for Linux in the ["Compiling from source"](https://github.com/node-hid/node-hid#compiling-from-source) steps for `node-hid`:
+      `bash sudo apt-get install build-essential git sudo apt-get install gcc-4.8 g++-4.8 && export CXX=g++-4.8 sudo apt-get install sudo apt install libusb-1.0-0 libusb-1.0-0-dev`
+    * Install a recent version of Node.js.:
+      `bash curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash - sudo apt-get install -y nodejs`
+    * Try installing `node-elgato-stream-deck`
+    * If you still have issues, ensure everything is updated and try again:
+      `bash sudo apt-get update && sudo apt-get upgrade`
 
 ## Table of Contents
 
@@ -47,18 +43,18 @@ some of `node-elgato-stream-deck`'s dependencies from source.
 * [Planned Features](#planned-features)
 * [Contributing](#contributing)
 * [API](#api)
-  * [`write`](#write)
-  * [`fillColor`](#fill-color)
-  * [`fillImageFromFile`](#fill-image-from-file)
-  * [`fillImage`](#fill-image)
-  * [`fillPanel`](#fill-panel)
-  * [`clearKey`](#clear-key)
-  * [`clearAllKeys`](#clear-all-keys)
-  * [`setBrightness`](#set-brightness)
+    * [`write`](#write)
+    * [`fillColor`](#fill-color)
+    * [`fillImageFromFile`](#fill-image-from-file)
+    * [`fillImage`](#fill-image)
+    * [`fillPanel`](#fill-panel)
+    * [`clearKey`](#clear-key)
+    * [`clearAllKeys`](#clear-all-keys)
+    * [`setBrightness`](#set-brightness)
 * [Events](#events)
-  * [`down`](#down)
-  * [`up`](#up)
-  * [`error`](#error)
+    * [`down`](#down)
+    * [`up`](#up)
+    * [`error`](#error)
 * [Protocol Notes](#protocol-notes)
 
 ### Example
@@ -178,7 +174,8 @@ If necessary, the image will be center-cropped to fit into a square.
 
 ```javascript
 // Fill the second button from the left in the first row with an image of the GitHub logo.
-streamDeck.fillImageFromFile(3, path.resolve(__dirname, 'github_logo.png'))
+streamDeck
+	.fillImageFromFile(3, path.resolve(__dirname, 'github_logo.png'))
 	.then(() => {
 		console.log('Successfully wrote a GitHub logo to key 3.');
 	})
@@ -220,7 +217,8 @@ This method accepts either a path to an image on the disk, or a buffer. The imag
 
 ```javascript
 // Fill the second button from the left in the first row with an image of the GitHub logo.
-streamDeck.fillPanel(path.resolve(__dirname, 'examples/fixtures/sunny_field.png'))
+streamDeck
+	.fillPanel(path.resolve(__dirname, 'examples/fixtures/sunny_field.png'))
 	.then(() => {
 		console.log('Successfully filled the panel with an image.');
 	})

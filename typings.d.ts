@@ -7,8 +7,6 @@ interface IStreamDeck {
 
 	clearKey(keyIndex: number): void;
 	fillColor(keyIndex: number, r: number, g: number, b: number): void;
-	fillImage(keyIndex: number, imageBuffer: Buffer): void;
-	fillImageFromFile(keyIndex: number, filePath: string): Promise<void>;
 
 	bufferToIntArray(buffer: Buffer): number[];
 

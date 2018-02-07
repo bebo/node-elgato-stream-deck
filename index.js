@@ -5,7 +5,6 @@ const EventEmitter = require('events');
 
 // Packages
 const HID = require('node-hid');
-const sharp = require('sharp');
 
 const NUM_KEYS = 15;
 const PAGE_PACKET_SIZE = 8191;
@@ -189,7 +188,7 @@ class StreamDeck extends EventEmitter {
 		for (let r = 0; r < ICON_SIZE; r++) {
 			const row = [];
 			const start = r * 3 * ICON_SIZE;
-			for (let i = start; i < start + (ICON_SIZE * 3); i += 3) {
+			for (let i = start; i < start + ICON_SIZE * 3; i += 3) {
 				const r = imageBuffer.readUInt8(i);
 				const g = imageBuffer.readUInt8(i + 1);
 				const b = imageBuffer.readUInt8(i + 2);
@@ -202,62 +201,6 @@ class StreamDeck extends EventEmitter {
 		const secondPagePixels = pixels.slice(NUM_FIRST_PAGE_PIXELS * 3, NUM_TOTAL_PIXELS * 3);
 		this._writePage1(keyIndex, Buffer.from(firstPagePixels));
 		this._writePage2(keyIndex, Buffer.from(secondPagePixels));
-	}
-
-	/**
-	 * Fill's the given key with an image from a file.
-	 *
-	 * @param {number} keyIndex The key to fill 0 - 14
-	 * @param {String} filePath A file path to an image file
-	 * @returns {Promise<void>} Resolves when the file has been written
-	 */
-	async fillImageFromFile(keyIndex, filePath) {
-		StreamDeck.checkValidKeyIndex(keyIndex);
-		return sharp(filePath)
-			.flatten() // Eliminate alpha channel, if any.
-			.resize(StreamDeck.ICON_SIZE, StreamDeck.ICON_SIZE)
-			.raw()
-			.toBuffer()
-			.then(buffer => {
-				return this.fillImage(keyIndex, buffer);
-			});
-	}
-
-	/**
-	 * Fills the whole panel with an image in a Buffer.
-	 * The image is scaled to fit, and then center-cropped (if necessary).
-	 *
-	 * @param {Buffer|String} imagePathOrBuffer
-	 * @param {Object} [sharpOptions] - Options to pass to sharp, necessary if supplying a buffer of raw pixels.
-	 * See http://sharp.dimens.io/en/latest/api-constructor/#sharpinput-options for more details.
-	 */
-	async fillPanel(imagePathOrBuffer, sharpOptions) {
-		const image = await sharp(imagePathOrBuffer, sharpOptions)
-			.resize(NUM_BUTTON_COLUMNS * ICON_SIZE, NUM_BUTTON_ROWS * ICON_SIZE)
-			.flatten(); // Eliminate alpha channel, if any.
-
-		const buttons = [];
-		for (let row = 0; row < NUM_BUTTON_ROWS; row++) {
-			for (let column = 0; column < NUM_BUTTON_COLUMNS; column++) {
-				buttons.push({
-					index: (row * NUM_BUTTON_COLUMNS) + NUM_BUTTON_COLUMNS - column - 1,
-					x: column,
-					y: row
-				});
-			}
-		}
-
-		const buttonFillPromises = buttons.map(async button => {
-			const imageBuffer = await image.extract({
-				left: button.x * ICON_SIZE,
-				top: button.y * ICON_SIZE,
-				width: ICON_SIZE,
-				height: ICON_SIZE
-			}).raw().toBuffer();
-			return this.fillImage(button.index, imageBuffer);
-		});
-
-		return Promise.all(buttonFillPromises);
 	}
 
 	/**
@@ -306,15 +249,76 @@ class StreamDeck extends EventEmitter {
 	 */
 	_writePage1(keyIndex, buffer) {
 		const header = Buffer.from([
-			0x02, 0x01, 0x01, 0x00, 0x00, keyIndex + 1, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x42, 0x4d, 0xf6, 0x3c, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
-			0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x48, 0x00,
-			0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0xc0, 0x3c, 0x00, 0x00, 0xc4, 0x0e,
-			0x00, 0x00, 0xc4, 0x0e, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+			0x02,
+			0x01,
+			0x01,
+			0x00,
+			0x00,
+			keyIndex + 1,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x42,
+			0x4d,
+			0xf6,
+			0x3c,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x36,
+			0x00,
+			0x00,
+			0x00,
+			0x28,
+			0x00,
+			0x00,
+			0x00,
+			0x48,
+			0x00,
+			0x00,
+			0x00,
+			0x48,
+			0x00,
+			0x00,
+			0x00,
+			0x01,
+			0x00,
+			0x18,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0xc0,
+			0x3c,
+			0x00,
+			0x00,
+			0xc4,
+			0x0e,
+			0x00,
+			0x00,
+			0xc4,
+			0x0e,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00
 		]);
 
 		const packet = StreamDeck.padBufferToLength(Buffer.concat([header, buffer]), PAGE_PACKET_SIZE);
@@ -331,8 +335,22 @@ class StreamDeck extends EventEmitter {
 	 */
 	_writePage2(keyIndex, buffer) {
 		const header = Buffer.from([
-			0x02, 0x01, 0x02, 0x00, 0x01, keyIndex + 1, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+			0x02,
+			0x01,
+			0x02,
+			0x00,
+			0x01,
+			keyIndex + 1,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x00
 		]);
 
 		const packet = StreamDeck.padBufferToLength(Buffer.concat([header, buffer]), PAGE_PACKET_SIZE);
