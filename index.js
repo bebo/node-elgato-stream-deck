@@ -90,45 +90,73 @@ class StreamDeck extends EventEmitter {
 
 	constructor(devicePath) {
 		super();
-
-		if (typeof devicePath === 'undefined') {
-			// Device path not provided, will then select any connected device.
-			const devices = HID.devices();
-			const connectedStreamDecks = devices.filter(device => {
-				return device.vendorId === 0x0fd9 && device.productId === 0x0060;
-			});
-			if (!connectedStreamDecks.length) {
-				throw new Error('No Stream Decks are connected.');
-			}
-			this.device = new HID.HID(connectedStreamDecks[0].path);
-		} else {
-			this.device = new HID.HID(devicePath);
-		}
-
 		this.keyState = new Array(NUM_KEYS).fill(false);
+		this.device = null;
+	}
 
-		this.device.on('data', data => {
-			// The first byte is a report ID, the last byte appears to be padding.
-			// We strip these out for now.
-			data = data.slice(1, data.length - 1);
+	/**
+	 *
+	 *
+	 * @returns Boolean
+	 * @memberof StreamDeck
+	 */
+	isConnected() {
+		const allDevices = HID.devices();
+		const path = (allDevices.find(d => d.vendorId === 0x0fd9 && d.productId === 0x0060) || {}).path;
+		return path;
+	}
 
-			for (let i = 0; i < NUM_KEYS; i++) {
-				const keyPressed = Boolean(data[i]);
-				const stateChanged = keyPressed !== this.keyState[i];
-				if (stateChanged) {
-					this.keyState[i] = keyPressed;
-					if (keyPressed) {
-						this.emit('down', i);
-					} else {
-						this.emit('up', i);
+	/**
+	 *
+	 *
+	 * @returns Promise
+	 * @memberof StreamDeck
+	 */
+	attemptConnection() {
+		return new Promise((resolve, reject) => {
+			try {
+				this.device = new HID.HID(0x0fd9, 0x0060);
+				this.device.on('data', data => {
+					// The first byte is a report ID, the last byte appears to be padding.
+					// We strip these out for now.
+					data = data.slice(1, data.length - 1);
+
+					for (let i = 0; i < NUM_KEYS; i++) {
+						const keyPressed = Boolean(data[i]);
+						const stateChanged = keyPressed !== this.keyState[i];
+						if (stateChanged) {
+							this.keyState[i] = keyPressed;
+							if (keyPressed) {
+								this.emit('down', i);
+							} else {
+								this.emit('up', i);
+							}
+						}
 					}
-				}
+				});
+
+				this.device.on('error', err => {
+					this.emit('error', err);
+				});
+				resolve(this);
+			} catch (err) {
+				reject(err);
 			}
 		});
+	}
 
-		this.device.on('error', err => {
-			this.emit('error', err);
-		});
+	cleanup() {
+		if (this.device) {
+			this.device.close();
+			this.device = null;
+		}
+	}
+
+	cleanupDevice() {
+		if (this.device) {
+			this.device.close();
+			this.device = null;
+		}
 	}
 
 	/**
@@ -138,6 +166,9 @@ class StreamDeck extends EventEmitter {
 	 * @returns undefined
 	 */
 	write(buffer) {
+		if (!this.device) {
+			return Promise.reject('no_device');
+		}
 		return this.device.write(StreamDeck.bufferToIntArray(buffer));
 	}
 
@@ -148,6 +179,9 @@ class StreamDeck extends EventEmitter {
 	 * @returns undefined
 	 */
 	sendFeatureReport(buffer) {
+		if (!this.device) {
+			return Promise.reject('no_device');
+		}
 		return this.device.sendFeatureReport(StreamDeck.bufferToIntArray(buffer));
 	}
 
